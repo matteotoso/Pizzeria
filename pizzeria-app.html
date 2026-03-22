@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f0e0c">
+<title>🍕 PizzaOrder Pro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root {
+    --bg:#0f0e0c;--bg2:#1a1815;--bg3:#242220;--card:#1e1c1a;
+    --border:#2e2b28;--red:#c8382a;--red-light:#e04535;
+    --amber:#d4882a;--green:#3a8a52;--green-light:#4aaa66;
+    --text:#f0ede8;--text2:#9e9890;--text3:#6a6660;
+    --radius:14px;--shadow:0 4px 24px rgba(0,0,0,0.4);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overscroll-behavior:none;user-select:none;}
+  .screen{display:none;min-height:100vh;flex-direction:column;}
+  .screen.active{display:flex;}
+
+  /* TOPBAR */
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:13px 16px;display:flex;align-items:center;gap:9px;position:sticky;top:0;z-index:100;}
+  .topbar-title{font-family:'Playfair Display',serif;font-size:1.12rem;font-weight:700;flex:1;}
+  .badge{background:var(--red);color:#fff;font-size:0.7rem;font-weight:600;padding:2px 8px;border-radius:20px;}
+  .btn-icon{width:36px;height:36px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .btn-icon:active{background:var(--border);}
+
+  /* SETUP */
+  #screen-setup{align-items:center;padding:28px 18px 40px;overflow-y:auto;}
+  .setup-logo{font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:900;color:var(--amber);margin-bottom:3px;text-align:center;}
+  .setup-sub{color:var(--text2);font-size:0.84rem;text-align:center;margin-bottom:24px;}
+  .setup-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;width:100%;max-width:420px;margin-bottom:10px;}
+  .setup-card h3{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.09em;color:var(--text2);margin-bottom:13px;}
+  .input-row{display:flex;align-items:center;gap:12px;margin-bottom:9px;}
+  .input-row:last-child{margin-bottom:0;}
+  .input-row label{flex:1;font-size:0.92rem;}
+  .num-ctrl{display:flex;align-items:center;gap:7px;}
+  .num-ctrl button{width:33px;height:33px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:1.1rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .num-ctrl button:active{background:var(--amber);color:var(--bg);}
+  .num-ctrl span{min-width:34px;text-align:center;font-size:1.05rem;font-weight:700;color:var(--amber);}
+  .btn-primary{width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:0.97rem;font-weight:600;cursor:pointer;max-width:420px;}
+  .btn-primary:active{background:var(--red-light);}
+  .btn-primary:disabled{background:var(--bg3);color:var(--text3);cursor:default;}
+  .btn-secondary{width:100%;padding:12px;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:500;cursor:pointer;max-width:420px;margin-top:7px;}
+  .btn-secondary:active{background:var(--bg3);color:var(--text);}
+
+  /* BT */
+  .bt-status{display:flex;align-items:center;gap:8px;font-size:0.76rem;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 11px;cursor:pointer;flex:1;}
+  .bt-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+  .bt-dot.connected{background:var(--green-light);box-shadow:0 0 6px rgba(74,170,102,0.5);}
+  .bt-dot.connecting{background:var(--amber);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+  /* INSTALL */
+  .install-banner{background:rgba(212,136,42,0.07);border:1px solid rgba(212,136,42,0.22);border-radius:var(--radius);padding:11px 13px;display:flex;align-items:center;gap:9px;width:100%;max-width:420px;margin-top:10px;cursor:pointer;}
+  .install-text{flex:1;font-size:0.8rem;color:var(--text2);}
+  .install-text strong{color:var(--amber);display:block;margin-bottom:1px;font-size:0.84rem;}
+  .install-btn-sm{font-size:0.75rem;font-weight:600;color:var(--amber);background:rgba(212,136,42,0.14);border:1px solid rgba(212,136,42,0.3);border-radius:7px;padding:5px 10px;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+
+  /* DASHBOARD */
+  .dash-body{flex:1;padding:13px;overflow-y:auto;padding-bottom:88px;}
+  .stocks-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px;}
+  .stock-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px;}
+  .stock-card .sl{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text2);margin-bottom:4px;}
+  .stock-card .sv{font-size:1.85rem;font-weight:700;color:var(--amber);}
+  .stock-card .ss{font-size:0.7rem;color:var(--text3);margin-top:1px;}
+  .stock-card.low .sv{color:var(--red);}
+  .warn-bar{background:rgba(212,136,42,0.09);border-bottom:1px solid rgba(212,136,42,0.2);padding:7px 13px;font-size:0.76rem;color:var(--amber);display:flex;align-items:center;gap:7px;}
+
+  /* TIME GROUPS */
+  .time-group{margin-bottom:13px;}
+  .tg-header{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+  .tg-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.09em;color:var(--text2);white-space:nowrap;}
+  .tg-line{flex:1;height:1px;background:var(--border);}
+  .tg-cnt{font-size:0.68rem;color:var(--text3);white-space:nowrap;}
+
+  .order-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;display:flex;align-items:center;gap:9px;cursor:pointer;margin-bottom:6px;}
+  .order-item:active{border-color:var(--amber);}
+  .otb{background:var(--bg3);border-radius:7px;padding:5px 8px;text-align:center;flex-shrink:0;min-width:46px;}
+  .otb-time{font-size:0.82rem;font-weight:700;color:var(--amber);}
+  .otb-num{font-size:0.62rem;color:var(--text3);margin-top:1px;}
+  .oinfo{flex:1;min-width:0;}
+  .oname{font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .odetail{font-size:0.74rem;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .oprice{font-weight:700;color:var(--amber);font-size:0.9rem;flex-shrink:0;}
+  .otags{display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0;}
+  .otag{font-size:0.62rem;padding:2px 6px;border-radius:5px;font-weight:600;white-space:nowrap;}
+  .tag-d{background:rgba(212,136,42,0.14);color:var(--amber);}
+  .tag-p{background:rgba(58,138,82,0.14);color:var(--green-light);}
+  .tag-pos{background:rgba(100,100,220,0.14);color:#9999ee;}
+  .empty-state{text-align:center;color:var(--text3);padding:44px 0;font-size:0.88rem;}
+  .fab{position:fixed;bottom:22px;right:18px;width:56px;height:56px;border-radius:17px;background:var(--red);color:#fff;font-size:1.55rem;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 22px rgba(200,56,42,0.44);z-index:50;}
+  .fab:active{transform:scale(0.92);}
+
+  /* ORDER SCREEN */
+  .order-body{flex:1;overflow-y:auto;padding:13px;padding-bottom:88px;}
+  .sec-title{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text2);margin-bottom:7px;margin-top:15px;}
+  .sec-title:first-child{margin-top:0;}
+  .toggle-row{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+  .toggle-label{font-size:0.93rem;font-weight:500;}
+  .toggle-switch{position:relative;width:46px;height:25px;flex-shrink:0;}
+  .toggle-switch input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg3);border-radius:25px;cursor:pointer;transition:background .2s;}
+  .toggle-slider:before{content:'';position:absolute;width:19px;height:19px;left:3px;bottom:3px;background:var(--text2);border-radius:50%;transition:transform .2s,background .2s;}
+  .toggle-switch input:checked+.toggle-slider{background:var(--green);}
+  .toggle-switch input:checked+.toggle-slider:before{transform:translateX(21px);background:#fff;}
+  .field-group{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:7px;}
+  .field-row{display:flex;align-items:center;padding:11px 13px;border-bottom:1px solid var(--border);gap:9px;}
+  .field-row:last-child{border-bottom:none;}
+  .field-row label{font-size:0.76rem;color:var(--text2);width:82px;flex-shrink:0;}
+  .field-row input,.field-row select{flex:1;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;-webkit-appearance:none;}
+  .field-row select option{background:var(--bg2);}
+  .field-row input::placeholder{color:var(--text3);}
+  .field-row input[type=time]{color-scheme:dark;}
+  .pos-row{display:flex;align-items:center;padding:11px 13px;gap:9px;}
+  .pos-row label{font-size:0.76rem;color:var(--text2);width:82px;flex-shrink:0;}
+
+  /* TIME CHIPS */
+  .time-chips-wrap{padding:5px 13px 11px;display:flex;gap:5px;flex-wrap:wrap;}
+  .tc{font-size:0.68rem;padding:3px 8px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;white-space:nowrap;}
+  .tc:active,.tc.active{background:rgba(212,136,42,0.14);color:var(--amber);border-color:var(--amber);}
+
+  /* PIZZA ITEMS */
+  .pizza-items-list{display:flex;flex-direction:column;gap:6px;}
+  .pizza-item-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .pi-header{padding:10px 12px;display:flex;align-items:center;gap:8px;}
+  .pi-badge{font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:0.04em;flex-shrink:0;}
+  .bn{background:rgba(212,136,42,0.14);color:var(--amber);}
+  .ba{background:rgba(200,56,42,0.14);color:var(--red-light);}
+  .bp{background:rgba(58,138,82,0.14);color:var(--green-light);}
+  .bt_{background:rgba(100,100,220,0.14);color:#9999ee;}
+  .pi-name{flex:1;font-size:0.86rem;font-weight:500;}
+  .pi-price{font-weight:700;color:var(--amber);font-size:0.86rem;flex-shrink:0;}
+  .rm-btn{width:25px;height:25px;border-radius:6px;background:rgba(200,56,42,0.11);border:none;color:var(--red-light);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .pi-extras{padding:0 12px 9px;display:flex;flex-wrap:wrap;gap:4px;}
+  .etag{font-size:0.68rem;padding:2px 7px;border-radius:5px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+  .add-pizza-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;}
+  .apb{padding:11px 3px;border-radius:var(--radius);border:1px dashed var(--border);background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:0.73rem;cursor:pointer;text-align:center;line-height:1.3;}
+  .apb:active{border-color:var(--amber);color:var(--amber);background:rgba(212,136,42,0.05);}
+  .apb .ai{font-size:0.95rem;display:block;margin-bottom:2px;}
+  .total-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;display:flex;align-items:center;justify-content:space-between;margin-top:9px;}
+  .total-box .tl{font-size:0.76rem;color:var(--text2);}
+  .total-box .tv{font-size:1.5rem;font-weight:700;font-family:'Playfair Display',serif;color:var(--amber);}
+  .total-box .tsub{font-size:0.7rem;color:var(--text3);margin-top:1px;}
+  .bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:11px 15px 20px;background:linear-gradient(to top,var(--bg) 82%,transparent);z-index:50;}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.74);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--bg2);border-top:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;padding:17px;animation:slideUp .21s ease;}
+  @keyframes slideUp{from{transform:translateY(38px);opacity:0}to{transform:none;opacity:1}}
+  .mhandle{width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 15px;}
+  .mtitle{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;margin-bottom:13px;}
+  .mbtns{display:flex;gap:7px;margin-top:13px;}
+  .mbtns .btn-secondary{margin-top:0;}
+  .mbtns .btn-primary{max-width:none;flex:1;}
+
+  /* QTY */
+  .qty-sel{display:flex;align-items:center;gap:11px;margin-bottom:11px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px 12px;}
+  .qty-sel label{flex:1;font-size:0.86rem;}
+
+  /* AGGIUNTE */
+  .agg-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:9px;}
+  .agg-chip{padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .agg-chip.sel{border-color:var(--amber);background:rgba(212,136,42,0.09);color:var(--amber);}
+  .agg-check{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.6rem;}
+  .agg-chip.sel .agg-check{background:var(--amber);border-color:var(--amber);color:var(--bg);}
+
+  /* TEGLIA */
+  .teglia-slot-vis{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:11px;}
+  .tslot{width:21px;height:21px;border-radius:5px;background:var(--bg2);border:1px solid var(--border);font-size:0.56rem;display:flex;align-items:center;justify-content:center;}
+  .tslot.norm{background:rgba(212,136,42,0.19);border-color:var(--amber);color:var(--amber);}
+  .tslot.abbo{background:rgba(200,56,42,0.19);border-color:var(--red-light);color:var(--red-light);}
+  .teglia-tr-row{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 11px;display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+
+  /* RECEIPT */
+  .receipt{background:#fff;color:#111;border-radius:7px;padding:14px;font-family:'Courier New',monospace;font-size:0.73rem;line-height:1.65;white-space:pre-wrap;word-break:break-word;max-height:50vh;overflow-y:auto;}
+
+  /* CONFIRMED */
+  .confirmed-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:13px;z-index:1000;padding:22px;text-align:center;}
+  .confirmed-screen.show{display:flex;}
+  .c-icon{font-size:3.6rem;}
+  .c-title{font-family:'Playfair Display',serif;font-size:1.65rem;font-weight:900;color:var(--green-light);}
+  .c-sub{color:var(--text2);font-size:0.86rem;}
+
+  /* TOAST */
+  .toast{position:fixed;top:65px;left:50%;transform:translateX(-50%) translateY(-9px);background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:8px 15px;font-size:0.8rem;font-weight:500;color:var(--text);z-index:500;opacity:0;transition:all .21s;white-space:nowrap;pointer-events:none;box-shadow:var(--shadow);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.success{border-color:var(--green);color:var(--green-light);}
+  .toast.error{border-color:var(--red);color:var(--red-light);}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== SETUP ===== -->
+<div class="screen active" id="screen-setup">
+  <div class="setup-logo">🍕 PizzaOrder</div>
+  <div class="setup-sub">Gestione ordini pizzeria</div>
+
+  <div class="setup-card">
+    <h3>Disponibilità giornaliera</h3>
+    <div class="input-row">
+      <label>🍕 Teglie di pizza</label>
+      <div class="num-ctrl">
+        <button onclick="adj('teglie',-1)">−</button>
+        <span id="val-teglie">10</span>
+        <button onclick="adj('teglie',1)">+</button>
+      </div>
+    </div>
+    <div class="input-row">
+      <label>🥘 Padellini</label>
+      <div class="num-ctrl">
+        <button onclick="adj('padellini',-1)">−</button>
+        <span id="val-padellini">20</span>
+        <button onclick="adj('padellini',1)">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="setup-card" style="margin-bottom:14px;">
+    <h3>Stampante Bluetooth</h3>
+    <div class="bt-status" id="bt-status-setup" onclick="connectBT()">
+      <div class="bt-dot" id="bt-dot-setup"></div>
+      <span id="bt-label-setup">Non connessa — tocca per connettere</span>
+    </div>
+    <div style="font-size:0.73rem;color:var(--text3);margin-top:9px;">Opzionale — puoi connetterla anche dopo l'apertura del turno</div>
+  </div>
+
+  <button class="btn-primary" onclick="startSession()">▶ Inizia turno</button>
+  <button class="btn-secondary" onclick="showScreen('screen-dashboard')">📋 Dashboard ordini</button>
+
+  <div class="install-banner" id="install-banner" style="display:none;" onclick="installApp()">
+    <span style="font-size:1.4rem;">📲</span>
+    <div class="install-text"><strong>Installa come app</strong>Funziona offline, dati sempre salvati</div>
+    <button class="install-btn-sm">Installa</button>
+  </div>
+  <div style="font-size:0.7rem;color:var(--text3);margin-top:14px;text-align:center;max-width:300px;">Gli ordini vengono salvati nel dispositivo e rimangono anche chiudendo il browser.</div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div class="screen" id="screen-dashboard">
+  <div class="topbar">
+    <span class="topbar-title">🍕 PizzaOrder</span>
+    <div class="bt-status" id="bt-status-dash" onclick="connectBT()" style="padding:4px 9px;font-size:0.68rem;flex:0;">
+      <div class="bt-dot" id="bt-dot-dash"></div>
+      <span id="bt-label-dash">BT</span>
+    </div>
+    <button class="btn-icon" onclick="showBtDebug()" title="Debug BT">🔍</button>
+    <button class="btn-icon" onclick="showScreen('screen-setup')">⚙</button>
+    <button class="btn-icon" onclick="closeTurn()">⏹</button>
+  </div>
+  <div id="warn-bar" class="warn-bar" style="display:none;">⚠️ <span id="warn-text"></span></div>
+  <div class="dash-body">
+    <div class="stocks-row">
+      <div class="stock-card" id="sc-tranci">
+        <div class="sl">Tranci rimasti</div>
+        <div class="sv" id="sv-tranci">—</div>
+        <div class="ss" id="ss-teglie">— teglie</div>
+      </div>
+      <div class="stock-card" id="sc-padellini">
+        <div class="sl">Padellini</div>
+        <div class="sv" id="sv-padellini">—</div>
+        <div class="ss">disponibili</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">
+      <span style="font-size:0.93rem;font-weight:600;">Ordini di oggi</span>
+      <span class="badge" id="orders-badge">0</span>
+    </div>
+    <div id="orders-list"><div class="empty-state">Nessun ordine ancora<br>Premi + per iniziare</div></div>
+  </div>
+  <button class="fab" onclick="goNewOrder()">+</button>
+</div>
+
+<!-- ===== NEW ORDER ===== -->
+<div class="screen" id="screen-order">
+  <div class="topbar">
+    <button class="btn-icon" onclick="showScreen('screen-dashboard')">←</button>
+    <span class="topbar-title">Nuovo Ordine</span>
+    <span id="ord-num-lbl" style="font-size:0.8rem;color:var(--text2);"></span>
+  </div>
+  <div class="order-body">
+
+    <div class="sec-title">Tipo ordine</div>
+    <div class="toggle-row">
+      <span class="toggle-label">🛵 Consegna a domicilio</span>
+      <label class="toggle-switch"><input type="checkbox" id="tog-delivery" onchange="onToggleDelivery()"><span class="toggle-slider"></span></label>
+    </div>
+
+    <div class="sec-title">Orario consegna / ritiro</div>
+    <div class="field-group">
+      <div class="field-row">
+        <label>🕐 Orario</label>
+        <input type="time" id="f-orario" value="19:00" min="18:00" max="23:59">
+      </div>
+      <div class="time-chips-wrap" id="time-chips"></div>
+    </div>
+
+    <div class="sec-title">Dati cliente</div>
+    <div class="field-group">
+      <div class="field-row"><label>Nome</label><input type="text" id="f-nome" placeholder="Nome cliente" autocomplete="off" spellcheck="false"></div>
+      <div class="field-row" id="row-ind" style="display:none;"><label>Indirizzo</label><input type="text" id="f-ind" placeholder="Via, numero civico" autocomplete="off" spellcheck="false"></div>
+      <div class="field-row" id="row-cit" style="display:none;"><label>Citofono</label><input type="text" id="f-cit" placeholder="Nome citofono" autocomplete="off" spellcheck="false"></div>
+      <div class="field-row" id="row-tel" style="display:none;"><label>Telefono</label><input type="tel" id="f-tel" placeholder="Numero di telefono" autocomplete="off"></div>
+      <div class="pos-row" id="row-pos" style="display:none;">
+        <label>Paga POS</label>
+        <label class="toggle-switch" style="margin-left:auto;"><input type="checkbox" id="tog-pos"><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="sec-title">Pizza</div>
+    <div class="pizza-items-list" id="pizza-list"></div>
+    <div class="add-pizza-btns">
+      <button class="apb" onclick="openAddModal('normale')"><span class="ai">+</span>Trancio<br>Normale</button>
+      <button class="apb" onclick="openAddModal('abbondante')"><span class="ai">+</span>Trancio<br>Abbondante</button>
+      <button class="apb" onclick="openAddModal('padellino')"><span class="ai">+</span>Padellino</button>
+    </div>
+    <div id="avail-warn" style="font-size:0.73rem;color:var(--red-light);margin-top:3px;display:none;"></div>
+
+    <div class="total-box">
+      <div>
+        <div class="tl">Totale ordine</div>
+        <div class="tsub" id="del-note" style="display:none;">include €2,00 consegna</div>
+      </div>
+      <div class="tv" id="ord-total">€ 0,00</div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" onclick="submitOrder()">✓ Invia ordine</button>
+  </div>
+</div>
+
+<!-- MODAL: aggiungi item -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="modal-add-title">Aggiungi</div>
+    <div class="qty-sel">
+      <label>Quantità</label>
+      <div class="num-ctrl">
+        <button onclick="adjQty(-1)">−</button>
+        <span id="modal-qty">1</span>
+        <button onclick="adjQty(1)">+</button>
+      </div>
+    </div>
+    <div style="font-size:0.76rem;color:var(--text2);margin-bottom:1px;" id="agg-note"></div>
+    <div class="agg-grid" id="agg-grid"></div>
+    <div class="mbtns">
+      <button class="btn-secondary" onclick="closeModal('modal-add')">Annulla</button>
+      <button class="btn-primary" onclick="confirmAdd()">Aggiungi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: teglia -->
+<div class="modal-overlay" id="modal-teglia">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">Teglia Intera — €31,00</div>
+    <div style="font-size:0.78rem;color:var(--text2);margin-bottom:9px;">8 slot totali · Normale=1 slot · Abbondante=1,5 slot</div>
+    <div class="teglia-slot-vis" id="teg-vis"></div>
+    <div style="font-size:0.76rem;color:var(--text2);margin-bottom:11px;" id="teg-cnt">0/8 slot usati</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:11px;">
+      <button class="apb" onclick="addTegliaSlot('normale')"><span class="ai">+</span>Normale (1 slot)</button>
+      <button class="apb" onclick="addTegliaSlot('abbondante')"><span class="ai">+</span>Abbondante (1,5 slot)</button>
+    </div>
+    <div id="teg-list"></div>
+    <div class="mbtns">
+      <button class="btn-secondary" onclick="closeModal('modal-teglia')">Annulla</button>
+      <button class="btn-primary" onclick="confirmTeglia()">Aggiungi teglia</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: aggiunte teglia -->
+<div class="modal-overlay" id="modal-teg-agg">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="teg-agg-title">Aggiunte trancio</div>
+    <div class="agg-grid" id="agg-grid-teg"></div>
+    <div class="mbtns">
+      <button class="btn-secondary" onclick="closeModal('modal-teg-agg')">Chiudi</button>
+      <button class="btn-primary" onclick="saveTegAgg()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: scontrino -->
+<div class="modal-overlay" id="modal-receipt">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">🧾 Scontrino</div>
+    <div class="receipt" id="receipt-content"></div>
+    <div class="mbtns">
+      <button class="btn-secondary" onclick="closeModal('modal-receipt')">Chiudi</button>
+      <button class="btn-primary" onclick="printReceipt()">🖨 Stampa</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRMED -->
+<div class="confirmed-screen" id="screen-confirmed">
+  <div class="c-icon">✅</div>
+  <div class="c-title">Ordine inviato!</div>
+  <div class="c-sub" id="c-sub">Scontrino pronto</div>
+  <button class="btn-primary" style="max-width:290px;" onclick="afterConfirmed()">Continua</button>
+  <button class="btn-secondary" style="max-width:290px;" onclick="showReceiptFromConfirmed()">🧾 Vedi scontrino</button>
+</div>
+
+<script>
+'use strict';
+
+// === SICUREZZA: mai innerHTML con dati utente ===
+const safeText=(el,v)=>{if(el)el.textContent=String(v??'');};
+
+// === PREZZI ===
+const P={
+  normale:5.30, abbondante:8.00, padellino:5.80,
+  an:1.00, // aggiunta normale
+  aa:1.50, // aggiunta abbondante
+  ap:1.00, // aggiunta padellino
+  consegna:2.00, teglia:31.00,
+};
+const TEGLIA_SLOTS=8;
+const AGGIUNTE=['Doppia mozzarella','Friarielli','Cotto','Scamorza','Peperoni','Cipolle','Zucchine','Salsiccia','Salame piccante','Nduja','Acciughe','Grana','Rucola','Olive','Carciofi','Funghi','Capperi','Tonno'];
+
+// Slot orari 19:00-23:30 ogni 15 min
+const TIME_SLOTS=[];
+for(let h=19;h<=23;h++)for(let m=0;m<60;m+=15){if(h===23&&m>30)break;TIME_SLOTS.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);}
+
+// === STATE ===
+const S={
+  session:null, orders:[], bt:{device:null,char:null,connected:false},
+  cur:null, modal:{type:null,qty:1,agg:[]},
+  teglia:{slots:0,tranci:[]}, tegIdx:null, lastOrd:null,
+};
+
+// === INDEXEDDB ===
+let DB=null;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open('pzorder_v2',1);
+    r.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('orders'))d.createObjectStore('orders',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('session'))d.createObjectStore('session',{keyPath:'k'});
+    };
+    r.onsuccess=e=>{DB=e.target.result;res(DB);};
+    r.onerror=()=>rej(r.error);
+  });
+}
+const dbPut=(store,obj)=>{if(!DB)return;DB.transaction(store,'readwrite').objectStore(store).put(obj);};
+const dbDel=(store,k)=>{if(!DB)return;DB.transaction(store,'readwrite').objectStore(store).delete(k);};
+function dbGet(store,k){return new Promise(res=>{if(!DB){res(null);return;}const r=DB.transaction(store,'readonly').objectStore(store).get(k);r.onsuccess=()=>res(r.result||null);r.onerror=()=>res(null);});}
+function dbAll(store){return new Promise(res=>{if(!DB){res([]);return;}const r=DB.transaction(store,'readonly').objectStore(store).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>res([]);});}
+
+function saveSession(){if(S.session)dbPut('session',{k:'cur',...S.session});}
+function saveOrder(o){dbPut('orders',o);}
+
+async function loadData(){
+  await openDB();
+  const sess=await dbGet('session','cur');
+  if(sess){S.session=sess;}
+  const today=new Date().toDateString();
+  const all=await dbAll('orders');
+  S.orders=all.filter(o=>new Date(o.ts).toDateString()===today);
+  S.orders.sort((a,b)=>a.orario.localeCompare(b.orario));
+  refreshDash();
+}
+
+// === SETUP ===
+const vals={teglie:10,padellini:20};
+function adj(k,d){vals[k]=Math.max(0,vals[k]+d);safeText(document.getElementById('val-'+k),vals[k]);}
+
+function startSession(){
+  const prev=S.session;
+  S.session={
+    teglie:vals.teglie, padellini:vals.padellini,
+    tranci_rim:vals.teglie*TEGLIA_SLOTS,
+    pad_rim:vals.padellini,
+    orderCount:prev?prev.orderCount:0,
+    startedAt:prev?.startedAt||new Date().toISOString(),
+  };
+  saveSession();
+  refreshDash();
+  showScreen('screen-dashboard');
+}
+
+// === SCREENS ===
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='screen-dashboard')refreshDash();
+}
+
+// === TIME CHIPS ===
+function buildTimeChips(){
+  const w=document.getElementById('time-chips');
+  if(!w)return;
+  w.innerHTML='';
+  TIME_SLOTS.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='tc'; b.textContent=t;
+    b.onclick=()=>{
+      document.getElementById('f-orario').value=t;
+      document.querySelectorAll('.tc').forEach(c=>c.classList.remove('active'));
+      b.classList.add('active');
+    };
+    w.appendChild(b);
+  });
+}
+
+// === BLUETOOTH ===
+// UUIDs noti per stampanti termiche inkless / generiche
+const KNOWN_SERVICES=[
+  '000018f0-0000-1000-8000-00805f9b34fb', // XP, common thermal
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Inkless / Peripage / Paperang
+  '0000ff00-0000-1000-8000-00805f9b34fb', // Generic thermal
+  '0000ffe0-0000-1000-8000-00805f9b34fb', // HM-10 based
+  '000018f0-0000-1000-8000-00805f9b34fb',
+  '00001101-0000-1000-8000-00805f9b34fb', // SPP (raramente via GATT)
+  'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Peripage A6/A8
+];
+const KNOWN_CHARS=[
+  '00002af1-0000-1000-8000-00805f9b34fb',
+  '49535343-8841-43f4-a8d4-ecbe34729bb3', // Inkless write char
+  '0000ff02-0000-1000-8000-00805f9b34fb',
+  '0000ffe1-0000-1000-8000-00805f9b34fb',
+  'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f', // Peripage
+];
+
+const btLog=[];
+function logBT(msg){
+  btLog.push('['+new Date().toTimeString().slice(0,8)+'] '+msg);
+  console.log('[BT]',msg);
+}
+
+async function connectBT(){
+  if(!navigator.bluetooth){toast('Bluetooth non supportato — usa Chrome su Android','error');return;}
+  if(S.bt.connected){toast('Stampante già connessa ✓','success');return;}
+  updateBtUI('connecting');
+  btLog.length=0;
+  logBT('Richiesta dispositivo...');
+  try{
+    const dev=await navigator.bluetooth.requestDevice({
+      acceptAllDevices:true,
+      optionalServices:KNOWN_SERVICES,
+    });
+    S.bt.device=dev;
+    logBT('Dispositivo: '+dev.name+' ('+dev.id+')');
+    dev.addEventListener('gattserverdisconnected',()=>{
+      S.bt.connected=false;S.bt.char=null;
+      updateBtUI('disc');toast('Stampante disconnessa','error');
+      logBT('Disconnessa');
+    });
+
+    logBT('Connessione GATT...');
+    const srv=await dev.gatt.connect();
+    logBT('GATT connesso. Scansione servizi...');
+
+    // Scopri tutti i servizi disponibili
+    let foundChar=null;
+    try{
+      const services=await srv.getPrimaryServices();
+      logBT(`Trovati ${services.length} servizi`);
+      for(const svc of services){
+        logBT('Servizio: '+svc.uuid);
+        try{
+          const chars=await svc.getCharacteristics();
+          for(const ch of chars){
+            logBT('  Char: '+ch.uuid+' props:['+Object.keys(ch.properties).filter(k=>ch.properties[k]).join(',')+']');
+            // Cerca caratteristica scrivibile
+            if((ch.properties.write||ch.properties.writeWithoutResponse)&&!foundChar){
+              foundChar=ch;
+              logBT('  ✓ Selezionata per stampa');
+            }
+          }
+        }catch(e){logBT('  Errore chars: '+e.message);}
+      }
+    }catch(e){
+      logBT('getPrimaryServices fallito: '+e.message+' — provo UUID noti...');
+      // Fallback: prova UUID noti uno per uno
+      for(const svcUuid of KNOWN_SERVICES){
+        try{
+          const svc=await srv.getPrimaryService(svcUuid);
+          logBT('Trovato servizio: '+svcUuid);
+          for(const charUuid of KNOWN_CHARS){
+            try{
+              const ch=await svc.getCharacteristic(charUuid);
+              if(ch.properties.write||ch.properties.writeWithoutResponse){
+                foundChar=ch;
+                logBT('✓ Char trovata: '+charUuid);
+                break;
+              }
+            }catch{}
+          }
+          if(foundChar)break;
+        }catch{}
+      }
+    }
+
+    S.bt.char=foundChar;
+    S.bt.connected=true;
+    updateBtUI('connected',dev.name||'Stampante');
+    if(foundChar){
+      toast('Connessa e pronta ✓','success');
+      logBT('Pronta per stampare');
+    }else{
+      toast('Connessa ma caratteristica non trovata — premi 🔍 Debug','error');
+      logBT('ATTENZIONE: nessuna char scrivibile trovata');
+    }
+  }catch(e){
+    updateBtUI('disc');
+    logBT('Errore: '+e.name+': '+e.message);
+    if(e.name!=='NotFoundError')toast('Errore: '+e.message,'error');
+  }
+}
+
+function updateBtUI(st,nm){
+  [['bt-dot-setup','bt-label-setup'],['bt-dot-dash','bt-label-dash']].forEach(([d,l])=>{
+    const dot=document.getElementById(d),lbl=document.getElementById(l);
+    if(!dot)return;
+    dot.className='bt-dot'+(st==='connected'?' connected':st==='connecting'?' connecting':'');
+    safeText(lbl,st==='connected'?(nm||'Connessa'):st==='connecting'?'Connessione...':'Non connessa');
+  });
+}
+
+// Costruisce payload ESC/POS con fallback plain text per inkless
+function buildPrintPayload(text, useEscPos=true){
+  const enc=new TextEncoder();
+  if(!useEscPos){
+    // Plain text puro — alcune inkless vogliono solo bytes UTF8
+    return enc.encode(text+'\n\n\n');
+  }
+  const init=new Uint8Array([0x1B,0x40]);           // ESC @ reset
+  const lf=new Uint8Array([0x0A]);                   // line feed
+  const cut=new Uint8Array([0x1D,0x56,0x41,0x10]);  // partial cut
+  const data=enc.encode(text);
+  const full=new Uint8Array(init.length+data.length+lf.length+lf.length+lf.length+cut.length);
+  let off=0;
+  full.set(init,off);off+=init.length;
+  full.set(data,off);off+=data.length;
+  full.set(lf,off);off+=lf.length;
+  full.set(lf,off);off+=lf.length;
+  full.set(lf,off);off+=lf.length;
+  full.set(cut,off);
+  return full;
+}
+
+async function writeChunked(char, data, chunkSize=100){
+  const useWithoutResp=char.properties.writeWithoutResponse&&!char.properties.write;
+  for(let i=0;i<data.length;i+=chunkSize){
+    const chunk=data.slice(i,i+chunkSize);
+    if(useWithoutResp) await char.writeValueWithoutResponse(chunk);
+    else await char.writeValue(chunk);
+    await new Promise(r=>setTimeout(r,80));
+  }
+}
+
+async function sendToPrinter(text){
+  if(!S.bt.connected){toast('Stampante non connessa','error');return false;}
+  if(!S.bt.char){
+    toast('Caratteristica non trovata — vedi debug','error');
+    logBT('Stampa fallita: nessuna char');
+    return false;
+  }
+  logBT('Invio stampa ('+text.length+' chars)...');
+  try{
+    // Prima prova ESC/POS
+    const payload=buildPrintPayload(text, true);
+    await writeChunked(S.bt.char, payload, 100);
+    logBT('Stampa inviata ✓');
+    return true;
+  }catch(e){
+    logBT('ESC/POS fallito: '+e.message+' — provo plain text...');
+    try{
+      const payload=buildPrintPayload(text, false);
+      await writeChunked(S.bt.char, payload, 100);
+      logBT('Plain text inviato ✓');
+      return true;
+    }catch(e2){
+      logBT('Errore finale: '+e2.message);
+      toast('Errore stampa: '+e2.message,'error');
+      return false;
+    }
+  }
+}
+
+function showBtDebug(){
+  const log=btLog.length?btLog.join('\n'):'Nessun log — connetti prima la stampante';
+  const info=S.bt.connected
+    ?`Connessa: ${S.bt.device?.name||'?'}\nChar: ${S.bt.char?.uuid||'NON TROVATA'}\nWrite: ${S.bt.char?.properties?.write}\nWriteNoResp: ${S.bt.char?.properties?.writeWithoutResponse}`
+    :'Non connessa';
+  alert('=== DEBUG BLUETOOTH ===\n\n'+info+'\n\n=== LOG ===\n'+log);
+}
+
+// === DASHBOARD ===
+function refreshDash(){
+  if(!S.session)return;
+  const ss=S.session;
+  const tr=Math.round(ss.tranci_rim*10)/10;
+  safeText(document.getElementById('sv-tranci'),tr);
+  safeText(document.getElementById('ss-teglie'),Math.floor(ss.tranci_rim/TEGLIA_SLOTS*10)/10+' teglie');
+  safeText(document.getElementById('sv-padellini'),ss.pad_rim);
+  safeText(document.getElementById('orders-badge'),S.orders.length);
+  document.getElementById('sc-tranci').classList.toggle('low',tr<TEGLIA_SLOTS);
+  document.getElementById('sc-padellini').classList.toggle('low',ss.pad_rim<3);
+  const warns=[];
+  if(tr<TEGLIA_SLOTS)warns.push(`Solo ${tr} tranci rimasti`);
+  if(ss.pad_rim<3)warns.push(`Solo ${ss.pad_rim} padellini`);
+  const wb=document.getElementById('warn-bar');
+  if(warns.length){safeText(document.getElementById('warn-text'),warns.join(' · '));wb.style.display='flex';}
+  else wb.style.display='none';
+  renderOrdersList();
+}
+
+function renderOrdersList(){
+  const list=document.getElementById('orders-list');
+  if(S.orders.length===0){list.innerHTML='<div class="empty-state">Nessun ordine ancora<br>Premi + per iniziare</div>';return;}
+  list.innerHTML='';
+  const sorted=[...S.orders].sort((a,b)=>a.orario.localeCompare(b.orario));
+  const groups={};
+  sorted.forEach(o=>{const k=o.orario||'??:??';if(!groups[k])groups[k]=[];groups[k].push(o);});
+
+  Object.entries(groups).forEach(([time,ords])=>{
+    const grp=document.createElement('div'); grp.className='time-group';
+    const hdr=document.createElement('div'); hdr.className='tg-header';
+    const lbl=document.createElement('span'); lbl.className='tg-label'; safeText(lbl,'🕐 '+time);
+    const ln=document.createElement('div'); ln.className='tg-line';
+    const cnt=document.createElement('span'); cnt.className='tg-cnt'; safeText(cnt,ords.length+(ords.length===1?' ordine':' ordini'));
+    hdr.appendChild(lbl);hdr.appendChild(ln);hdr.appendChild(cnt);
+    grp.appendChild(hdr);
+
+    ords.forEach(ord=>{
+      const el=document.createElement('div'); el.className='order-item';
+      el.onclick=()=>showOrderDetail(ord.id);
+
+      const tb=document.createElement('div'); tb.className='otb';
+      const tt=document.createElement('div'); tt.className='otb-time'; safeText(tt,ord.orario||'--:--');
+      const tn=document.createElement('div'); tn.className='otb-num'; safeText(tn,'#'+ord.num);
+      tb.appendChild(tt);tb.appendChild(tn);
+
+      const info=document.createElement('div'); info.className='oinfo';
+      const nm=document.createElement('div'); nm.className='oname'; safeText(nm,ord.nome||'Anonimo');
+      const dt=document.createElement('div'); dt.className='odetail';
+      safeText(dt,ord.items.map(i=>i.type==='teglia'?`Teglia(${i.tranci.length}tr)`:cap(i.type)).join(', '));
+      info.appendChild(nm);info.appendChild(dt);
+
+      const pr=document.createElement('div'); pr.className='oprice'; safeText(pr,'€'+ord.total.toFixed(2).replace('.',','));
+
+      const tgs=document.createElement('div'); tgs.className='otags';
+      const t1=document.createElement('div'); t1.className='otag '+(ord.delivery?'tag-d':'tag-p');
+      safeText(t1,ord.delivery?'🛵 Consegna':'🏠 Ritiro');
+      tgs.appendChild(t1);
+      if(ord.pos){const t2=document.createElement('div');t2.className='otag tag-pos';safeText(t2,'💳 POS');tgs.appendChild(t2);}
+
+      el.appendChild(tb);el.appendChild(info);el.appendChild(pr);el.appendChild(tgs);
+      grp.appendChild(el);
+    });
+    list.appendChild(grp);
+  });
+}
+
+// === NEW ORDER ===
+function goNewOrder(){
+  if(!S.session){toast('Prima avvia un turno','error');showScreen('screen-setup');return;}
+  S.cur={items:[],delivery:false};
+  document.getElementById('tog-delivery').checked=false;
+  document.getElementById('f-nome').value='';
+  document.getElementById('f-ind').value='';
+  document.getElementById('f-cit').value='';
+  document.getElementById('f-tel').value='';
+  document.getElementById('tog-pos').checked=false;
+  document.getElementById('f-orario').value='19:00';
+  document.querySelectorAll('.tc').forEach(c=>c.classList.remove('active'));
+  onToggleDelivery();
+  document.getElementById('pizza-list').innerHTML='';
+  safeText(document.getElementById('ord-num-lbl'),'#'+(S.session.orderCount+1));
+  updateTotal();
+  showScreen('screen-order');
+}
+
+function onToggleDelivery(){
+  const del=document.getElementById('tog-delivery').checked;
+  ['row-ind','row-cit','row-tel','row-pos'].forEach(id=>document.getElementById(id).style.display=del?'':'none');
+  document.getElementById('del-note').style.display=del?'':'none';
+  if(S.cur)S.cur.delivery=del;
+  updateTotal();
+}
+
+// === AGGIUNGI MODAL ===
+let curAddType=null;
+function openAddModal(type){
+  curAddType=type;
+  S.modal={type,qty:1,agg:[]};
+  const labels={normale:'🍕 Trancio Normale — €5,30',abbondante:'🍕 Trancio Abbondante — €8,00',padellino:'🥘 Padellino — €5,80'};
+  safeText(document.getElementById('modal-add-title'),labels[type]);
+  safeText(document.getElementById('modal-qty'),'1');
+  const note=type==='abbondante'?'Aggiunte: €1,50 cad.':'Aggiunte: €1,00 cad.';
+  safeText(document.getElementById('agg-note'),note);
+  renderAgg('agg-grid',S.modal.agg,type);
+  openModal('modal-add');
+}
+function adjQty(d){S.modal.qty=Math.max(1,S.modal.qty+d);safeText(document.getElementById('modal-qty'),S.modal.qty);}
+
+function renderAgg(gid,selArr,type){
+  const g=document.getElementById(gid); g.innerHTML='';
+  AGGIUNTE.forEach(a=>{
+    const chip=document.createElement('div');
+    chip.className='agg-chip'+(selArr.includes(a)?' sel':'');
+    chip.onclick=()=>toggleAgg(chip,a,selArr);
+    const chk=document.createElement('div'); chk.className='agg-check'; chk.textContent=selArr.includes(a)?'✓':'';
+    chip.appendChild(chk); chip.appendChild(document.createTextNode(a));
+    g.appendChild(chip);
+  });
+}
+function toggleAgg(chip,a,arr){
+  const i=arr.indexOf(a);
+  if(i>=0)arr.splice(i,1);else arr.push(a);
+  chip.classList.toggle('sel',arr.includes(a));
+  chip.querySelector('.agg-check').textContent=arr.includes(a)?'✓':'';
+}
+function confirmAdd(){
+  const {type,qty,agg}=S.modal;
+  if(type!=='padellino'&&S.session.tranci_rim<(type==='abbondante'?1.5:1)*qty){toast('Non abbastanza tranci!','error');return;}
+  if(type==='padellino'&&S.session.pad_rim<qty){toast('Non abbastanza padellini!','error');return;}
+  for(let i=0;i<qty;i++)S.cur.items.push({type,agg:[...agg]});
+  closeModal('modal-add');
+  renderPizzaList(); updateTotal();
+}
+
+// === TEGLIA ===
+function openTegliaModal(){S.teglia={slots:0,tranci:[]};renderTegVis();document.getElementById('teg-list').innerHTML='';openModal('modal-teglia');}
+function addTegliaSlot(type){
+  const cost=type==='normale'?1:1.5;
+  if(S.teglia.slots+cost>TEGLIA_SLOTS+0.01){toast('Teglia completa!','error');return;}
+  S.teglia.slots+=cost;S.teglia.tranci.push({type,agg:[]});
+  renderTegVis();renderTegList();
+}
+function renderTegVis(){
+  const vis=document.getElementById('teg-vis'); vis.innerHTML='';
+  S.teglia.tranci.forEach(t=>{const s=document.createElement('div');s.className='tslot '+(t.type==='normale'?'norm':'abbo');s.textContent=t.type==='normale'?'N':'A';vis.appendChild(s);});
+  for(let i=0;i<Math.floor(TEGLIA_SLOTS-S.teglia.slots);i++){const s=document.createElement('div');s.className='tslot';vis.appendChild(s);}
+  safeText(document.getElementById('teg-cnt'),S.teglia.slots.toFixed(1)+'/8 slot usati');
+}
+function renderTegList(){
+  const list=document.getElementById('teg-list'); list.innerHTML='';
+  S.teglia.tranci.forEach((t,i)=>{
+    const row=document.createElement('div'); row.className='teglia-tr-row';
+    const lbl=document.createElement('div'); lbl.style.flex='1';
+    const nm=document.createElement('div'); nm.style.fontSize='0.84rem'; safeText(nm,`Trancio ${i+1} — ${cap(t.type)}`);
+    const ag=document.createElement('div'); ag.style.cssText='font-size:0.7rem;color:var(--text2);margin-top:1px;';
+    safeText(ag,t.agg.length?'+'+t.agg.join(', '):'Nessuna aggiunta');
+    lbl.appendChild(nm);lbl.appendChild(ag);
+    const eb=document.createElement('button'); eb.className='tc'; safeText(eb,'+ Aggiunte'); eb.onclick=()=>openTegAgg(i);
+    const rb=document.createElement('button'); rb.className='rm-btn'; rb.textContent='×';
+    rb.onclick=()=>{S.teglia.slots-=t.type==='normale'?1:1.5;S.teglia.tranci.splice(i,1);renderTegVis();renderTegList();};
+    row.appendChild(lbl);row.appendChild(eb);row.appendChild(rb);
+    list.appendChild(row);
+  });
+}
+function openTegAgg(i){
+  S.tegIdx=i;const t=S.teglia.tranci[i];
+  safeText(document.getElementById('teg-agg-title'),`Aggiunte — Trancio ${i+1} (${cap(t.type)})`);
+  renderAgg('agg-grid-teg',t.agg,t.type);
+  openModal('modal-teg-agg');
+}
+function saveTegAgg(){closeModal('modal-teg-agg');renderTegList();}
+function confirmTeglia(){
+  if(S.teglia.tranci.length===0){toast('Aggiungi almeno un trancio!','error');return;}
+  if(S.session.tranci_rim<TEGLIA_SLOTS){toast('Non abbastanza tranci per una teglia!','error');return;}
+  let ac=0;
+  S.teglia.tranci.forEach(t=>{ac+=t.agg.length*(t.type==='abbondante'?P.aa:P.an);});
+  S.cur.items.push({type:'teglia',tranci:S.teglia.tranci.map(t=>({...t,agg:[...t.agg]})),aggiunteCost:ac});
+  closeModal('modal-teglia');renderPizzaList();updateTotal();
+}
+
+// === RENDER PIZZA LIST ===
+function renderPizzaList(){
+  const list=document.getElementById('pizza-list'); list.innerHTML='';
+  S.cur.items.forEach((item,idx)=>{
+    const card=document.createElement('div'); card.className='pizza-item-card';
+    const hdr=document.createElement('div'); hdr.className='pi-header';
+    const bg=document.createElement('div');
+    bg.className='pi-badge '+(item.type==='teglia'?'bt_':item.type==='normale'?'bn':item.type==='abbondante'?'ba':'bp');
+    safeText(bg,item.type==='teglia'?'TEGLIA':item.type.toUpperCase());
+    const nm=document.createElement('div'); nm.className='pi-name'; safeText(nm,itemName(item));
+    const pr=document.createElement('div'); pr.className='pi-price'; safeText(pr,'€'+itemPrice(item).toFixed(2).replace('.',','));
+    const rb=document.createElement('button'); rb.className='rm-btn'; rb.textContent='×';
+    rb.onclick=()=>{S.cur.items.splice(idx,1);renderPizzaList();updateTotal();};
+    hdr.appendChild(bg);hdr.appendChild(nm);hdr.appendChild(pr);hdr.appendChild(rb);
+    card.appendChild(hdr);
+    const extras=item.type==='teglia'?[]:((item.agg||[]));
+    if(extras.length){
+      const ed=document.createElement('div'); ed.className='pi-extras';
+      extras.forEach(a=>{const t=document.createElement('div');t.className='etag';safeText(t,a);ed.appendChild(t);});
+      card.appendChild(ed);
+    }
+    if(item.type==='teglia'){
+      const ed=document.createElement('div'); ed.className='pi-extras';
+      item.tranci.forEach(t=>{const tg=document.createElement('div');tg.className='etag';safeText(tg,cap(t.type)+(t.agg.length?'+'+t.agg.length:''));ed.appendChild(tg);});
+      card.appendChild(ed);
+    }
+    list.appendChild(card);
+  });
+}
+
+function itemName(item){
+  if(item.type==='padellino')return'Padellino';
+  if(item.type==='normale')return'Trancio Normale';
+  if(item.type==='abbondante')return'Trancio Abbondante';
+  if(item.type==='teglia')return`Teglia intera (${item.tranci.length} tranci)`;
+  return item.type;
+}
+function itemPrice(item){
+  if(item.type==='padellino')return P.padellino+(item.agg||[]).length*P.ap;
+  if(item.type==='normale')return P.normale+(item.agg||[]).length*P.an;
+  if(item.type==='abbondante')return P.abbondante+(item.agg||[]).length*P.aa;
+  if(item.type==='teglia')return P.teglia+(item.aggiunteCost||0);
+  return 0;
+}
+function calcTotal(items,del){
+  let tot=0;
+  const norm=items.filter(i=>i.type==='normale');
+  const abbo=items.filter(i=>i.type==='abbondante');
+  const pad=items.filter(i=>i.type==='padellino');
+  const teg=items.filter(i=>i.type==='teglia');
+  // 8 normali = teglia €31
+  const ng=Math.floor(norm.length/8),nr=norm.length%8;
+  for(let g=0;g<ng;g++){const sl=norm.slice(g*8,g*8+8);tot+=P.teglia+sl.reduce((s,i)=>s+(i.agg||[]).length*P.an,0);}
+  for(let i=0;i<nr;i++){const it=norm[ng*8+i];tot+=P.normale+(it.agg||[]).length*P.an;}
+  // 5 abbondanti = teglia €31
+  const ag=Math.floor(abbo.length/5),ar=abbo.length%5;
+  for(let g=0;g<ag;g++){const sl=abbo.slice(g*5,g*5+5);tot+=P.teglia+sl.reduce((s,i)=>s+(i.agg||[]).length*P.aa,0);}
+  for(let i=0;i<ar;i++){const it=abbo[ag*5+i];tot+=P.abbondante+(it.agg||[]).length*P.aa;}
+  pad.forEach(it=>tot+=P.padellino+(it.agg||[]).length*P.ap);
+  teg.forEach(it=>tot+=P.teglia+(it.aggiunteCost||0));
+  if(del)tot+=P.consegna;
+  return Math.round(tot*100)/100;
+}
+function updateTotal(){
+  if(!S.cur)return;
+  const del=document.getElementById('tog-delivery').checked;
+  safeText(document.getElementById('ord-total'),'€ '+calcTotal(S.cur.items,del).toFixed(2).replace('.',','));
+}
+
+// === SUBMIT ===
+function submitOrder(){
+  const del=document.getElementById('tog-delivery').checked;
+  const nome=document.getElementById('f-nome').value.trim();
+  const orario=document.getElementById('f-orario').value;
+  const ind=document.getElementById('f-ind').value.trim();
+  const cit=document.getElementById('f-cit').value.trim();
+  const tel=document.getElementById('f-tel').value.trim();
+  const pos=document.getElementById('tog-pos').checked;
+  if(!orario){toast('Inserisci l\'orario','error');return;}
+  if(!nome){toast('Inserisci il nome del cliente','error');return;}
+  if(del&&!ind){toast('Inserisci l\'indirizzo di consegna','error');return;}
+  if(S.cur.items.length===0){toast('Aggiungi almeno una pizza','error');return;}
+
+  // Deduci stock
+  S.cur.items.forEach(item=>{
+    if(item.type==='normale')S.session.tranci_rim-=1;
+    else if(item.type==='abbondante')S.session.tranci_rim-=1.5;
+    else if(item.type==='padellino')S.session.pad_rim-=1;
+    else if(item.type==='teglia')S.session.tranci_rim-=TEGLIA_SLOTS;
+  });
+  S.session.orderCount++;
+  saveSession();
+
+  const ord={
+    id:Date.now()+'_'+Math.random().toString(36).slice(2,7),
+    num:S.session.orderCount,
+    nome,orario,indirizzo:ind,citofono:cit,telefono:tel,pos,delivery:del,
+    items:S.cur.items,
+    total:calcTotal(S.cur.items,del),
+    ts:new Date().toISOString(),
+  };
+  S.orders.push(ord);
+  S.orders.sort((a,b)=>a.orario.localeCompare(b.orario));
+  saveOrder(ord);
+  S.lastOrd=ord;
+
+  sendToPrinter(buildReceipt(ord));
+  safeText(document.getElementById('c-sub'),S.bt.connected?'Scontrino inviato alla stampante':'Scontrino disponibile — stampante non connessa');
+  document.getElementById('screen-confirmed').classList.add('show');
+}
+
+function afterConfirmed(){document.getElementById('screen-confirmed').classList.remove('show');showScreen('screen-dashboard');}
+function showReceiptFromConfirmed(){
+  document.getElementById('screen-confirmed').classList.remove('show');
+  document.getElementById('receipt-content').textContent=buildReceipt(S.lastOrd);
+  openModal('modal-receipt');
+}
+function showOrderDetail(id){
+  const ord=S.orders.find(o=>o.id===id);if(!ord)return;
+  S.lastOrd=ord;
+  document.getElementById('receipt-content').textContent=buildReceipt(ord);
+  openModal('modal-receipt');
+}
+async function printReceipt(){
+  if(!S.lastOrd)return;
+  if(!S.bt.connected){toast('Stampante non connessa','error');return;}
+  const ok=await sendToPrinter(buildReceipt(S.lastOrd));
+  if(ok)toast('Stampato ✓','success');
+}
+
+// === RECEIPT ===
+function buildReceipt(ord){
+  const sep='--------------------------------\n';
+  const ctr=t=>t.padStart(Math.floor((32+t.length)/2)).padEnd(32)+'\n';
+  let r='';
+  r+=ctr('*** PIZZERIA ***');
+  r+=sep;
+  r+=`Ordine #${ord.num}   ${fmtDT(ord.ts)}\n`;
+  r+=`Orario: ${ord.orario}\n`;
+  r+=`Cliente: ${ord.nome}\n`;
+  if(ord.delivery){
+    r+=`Indirizzo: ${ord.indirizzo}\n`;
+    if(ord.citofono)r+=`Citofono: ${ord.citofono}\n`;
+    if(ord.telefono)r+=`Tel: ${ord.telefono}\n`;
+    r+=`Pagamento: ${ord.pos?'POS':'Contanti'}\n`;
+  }
+  r+=sep;
+  ord.items.forEach(item=>{
+    if(item.type==='teglia'){
+      r+=`Teglia intera          €${P.teglia.toFixed(2)}\n`;
+      item.tranci.forEach((t,j)=>{
+        r+=`  ${j+1}. ${cap(t.type)}\n`;
+        if(t.agg.length)r+=`     +${t.agg.join(', ')}\n`;
+      });
+      if(item.aggiunteCost>0)r+=`  Aggiunte: +€${item.aggiunteCost.toFixed(2)}\n`;
+    }else{
+      r+=`${itemName(item).padEnd(22)}€${P[item.type].toFixed(2)}\n`;
+      if((item.agg||[]).length){
+        const pc=item.type==='abbondante'?P.aa:P.ap;
+        r+=`  +${item.agg.join(', ')}\n`;
+        r+=`  Aggiunte: +€${(item.agg.length*pc).toFixed(2)}\n`;
+      }
+    }
+  });
+  r+=sep;
+  if(ord.delivery)r+=`Consegna:              +€${P.consegna.toFixed(2)}\n`;
+  r+=`TOTALE:                €${ord.total.toFixed(2)}\n\n`;
+  r+=ctr('Grazie! Buon appetito!');
+  r+='\n';
+  return r;
+}
+function fmtDT(iso){const d=new Date(iso);return d.toLocaleDateString('it-IT')+' '+d.toTimeString().slice(0,5);}
+function cap(s){return s?s[0].toUpperCase()+s.slice(1):'';}
+
+// === MODALS ===
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',function(e){if(e.target===this)closeModal(this.id);});
+});
+
+// === CHIUDI TURNO ===
+function closeTurn(){
+  if(confirm('Chiudere il turno corrente?\nGli ordini rimarranno salvati.')){
+    S.session=null;dbDel('session','cur');showScreen('screen-setup');
+  }
+}
+
+// === TOAST ===
+let toastT;
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  safeText(t,msg);
+  t.className='toast show'+(type?' '+type:'');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>{t.className='toast';},2800);
+}
+
+// === PWA INSTALL ===
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('install-banner').style.display='flex';
+});
+function installApp(){
+  if(!deferredPrompt){toast('Su iOS: condividi → "Aggiungi a schermata Home"');return;}
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(r=>{
+    if(r.outcome==='accepted')toast('App installata! ✓','success');
+    deferredPrompt=null;
+    document.getElementById('install-banner').style.display='none';
+  });
+}
+
+// === INIT ===
+async function init(){
+  buildTimeChips();
+  await loadData();
+  // Prevent double-tap zoom
+  let lt=0;
+  document.addEventListener('touchend',e=>{const n=Date.now();if(n-lt<300)e.preventDefault();lt=n;},{passive:false});
+  document.addEventListener('contextmenu',e=>e.preventDefault());
+}
+init();
+</script>
+</body>
+</html>
